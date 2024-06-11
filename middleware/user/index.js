@@ -1,9 +1,9 @@
+const { verify_token } = require("../../utils/jwtToken");
 const { user_services } = require("../../services/index");
 
 const verify_user_payload = (req, res, next) => {
   try {
     const { username, email, password, role, designation } = req.body;
-    console.log("Email", email);
 
     const emailRegex = /^[^s@]+@[^s@]+.[^s@]+$/;
     const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.*[a-z]).{8,}$/;
@@ -41,7 +41,7 @@ const verify_user_payload = (req, res, next) => {
 
 const verify_login_payload = (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email = "", password = "" } = req.body;
     const emailRegex = /^[^s@]+@[^s@]+.[^s@]+$/;
     const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.*[a-z]).{8,}$/;
 
@@ -70,10 +70,14 @@ const verify_login_payload = (req, res, next) => {
 const check_user_existence = async (req, res, next) => {
   try {
     const { username, email } = req.body;
-    const getUserByUsername = await user_services.get_user_by_username(
-      username
-    );
-    const getUserByEmail = await user_services.get_user_by_email(email);
+    const getUserByUsername = await user_services.get_user({
+      field: "username",
+      value: username,
+    });
+    const getUserByEmail = await user_services.get_user({
+      field: "email",
+      value: email,
+    });
 
     if (getUserByUsername && getUserByEmail) {
       res.status(409).json({ error: "username and email already in used!" });
@@ -89,8 +93,30 @@ const check_user_existence = async (req, res, next) => {
   }
 };
 
+const token_verification = async (req, res, next) => {
+  try {
+    const accessToken = req.headers["authorization"];
+    console.log("accessToken", accessToken);
+    // const bearer = accessToken.split(" ");
+    // const bearerToken = bearer[1];
+    const isExpire = verify_token(accessToken);
+    console.log("verofy", isExpire);
+    if (isExpire) {
+      res
+        .status(401)
+        .json({ message: "you are not authorized to perform this action" });
+    } else {
+      next();
+    }
+  } catch (error) {
+    console.log("Error", error.message);
+    res.status(500).json({ message: "something went wrong !" });
+  }
+};
+
 module.exports = {
   verify_user_payload,
   check_user_existence,
   verify_login_payload,
+  token_verification,
 };

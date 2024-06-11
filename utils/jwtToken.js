@@ -8,8 +8,8 @@ module.exports.jwt_token_generator = (user) => {
     {
       data: payload,
     },
-    process.env.SECRET_KEY,
-    { expiresIn: "1h" }
+    "MY_SERCRET_KEY",
+    { expiresIn: "1d" }
   );
   payload.token = token;
   return token;
@@ -17,9 +17,28 @@ module.exports.jwt_token_generator = (user) => {
 
 module.exports.verify_token = (token) => {
   try {
-    const decoded = jwt.verify(token, process.env.SECRET_KEY);
-    return decoded;
+    console.log("token", token);
+    const decoded = jwt.decode(token, "MY_SECRET_KEY");
+    console.log("Decoded Token:", decoded);
+
+    // Check if token is expired
+    if (decoded.exp < Math.floor(Date.now() / 1000)) {
+      console.log("Token is expired.");
+      return true;
+    }
+
+    // Add more checks if needed...
+
+    // If all checks pass, return true
+    return false;
   } catch (error) {
-    throw error;
+    if (error.name === "TokenExpiredError") {
+      console.log("Token is expired.");
+    } else if (error.name === "JsonWebTokenError") {
+      console.log("Invalid token:", error.message);
+    } else {
+      console.log("Error:", error.message);
+    }
+    return false;
   }
 };
