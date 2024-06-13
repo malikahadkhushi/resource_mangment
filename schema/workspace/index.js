@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 
 const workspaceSchema = new mongoose.Schema({
- 
   name: {
     type: String,
     required: true,
@@ -10,6 +9,9 @@ const workspaceSchema = new mongoose.Schema({
   },
   description: {
     type: String,
+  },
+  members: {
+    type: Array,
   },
   created_by: {
     type: String,
@@ -25,6 +27,6 @@ const workspaceSchema = new mongoose.Schema({
   },
 });
 
-const workspace = mongoose.model("workspaces", workspaceSchema);
+const workspaceModel = mongoose.model("workspaces", workspaceSchema);
 
-module.exports = workspace;
+module.exports = workspaceModel;

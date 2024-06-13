@@ -1,4 +1,4 @@
-const userModal = require("../../schema/user/index");
+const { userModal } = require("../../schema/index");
 module.exports.user_services = {
   get_user: ({ field, value }) => {
     try {
@@ -7,6 +7,7 @@ module.exports.user_services = {
       throw error;
     }
   },
+
   create_user: (payload) => {
     try {
       return userModal.insertMany(payload);
@@ -14,30 +15,6 @@ module.exports.user_services = {
       throw error;
     }
   },
-
-  // get_user_by_email: (email) => {
-  //   try {
-  //     return userModal.findOne({ email: email });
-  //   } catch (error) {
-  //     throw error;
-  //   }
-  // },
-
-  // get_user_by_username: (username) => {
-  //   try {
-  //     return userModal.findOne({ username: username });
-  //   } catch (error) {
-  //     throw error;
-  //   }
-  // },
-
-  // get_user_by_id: (id) => {
-  //   try {
-  //     return userModal.findById({ _id: id });
-  //   } catch (error) {
-  //     throw error;
-  //   }
-  // },
 
   update_user: (payload) => {
     try {

@@ -1,4 +1,4 @@
-const workspaceModel = require("../../schema/workspace/index");
+const { workspaceModel } = require("../../schema/index");
 
 module.exports.workspace_services = {
   create_workspace: (payload) => {

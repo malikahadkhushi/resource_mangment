@@ -1,4 +1,8 @@
-const { user_router, workspace_router } = require("./routes/index");
+const {
+  user_router,
+  workspace_router,
+  project_router,
+} = require("./routes/index");
 const express = require("express");
 const cors = require("cors");
 require("./dbConfig/db");
@@ -9,6 +13,7 @@ app.use(express.json());
 app.use(cors());
 app.use("/", user_router);
 app.use("/", workspace_router);
+app.use("/", project_router);
 
 app.listen(process.env.PORT, () => {
   try {
