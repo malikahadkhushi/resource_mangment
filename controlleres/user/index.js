@@ -14,6 +14,7 @@ module.exports.create_user = async (req, res) => {
   try {
     const payload = req.body;
     const { password } = payload;
+    console.log("sdfsd", payload);
     const hash = await generate_hash_password(password);
     payload.password = hash;
     const response = await user_services.create_user(payload);
@@ -32,7 +33,7 @@ module.exports.login = async (req, res) => {
   try {
     let { email, password } = req.body;
 
-    const user = await user_services.get_user({ email });
+    const user = await user_services.get_user({ field: "email", value: email });
     if (user?.password) {
       const response = await compare_password({
         password,
@@ -52,10 +53,74 @@ module.exports.login = async (req, res) => {
     }
   } catch (error) {
     console.log("Error", error);
-    res.status(500).json({ error: "some thing went wrong!" });
+    res.status(500).json({ error: "something went wrong!" });
   }
 };
 
+module.exports.get_user = async (req, res) => {
+  try {
+    const { field, value } = req.body;
+    const user = await user_services.get_user({ field: field, value: value });
+
+    if (user) {
+      res.status(200).json({ message: "successfull", data: user });
+    } else {
+      res.status(200).json({ message: "user does not exist", data: user });
+    }
+  } catch (error) {
+    console.log("Error", error);
+    res.status(500).json({ error: "sometthing went wrong!" });
+  }
+};
+
+module.exports.get_users = async (req, res) => {
+  try {
+    const users = await user_services.get_users();
+
+    if (users.length) {
+      res.status(200).json({ message: "successfull", data: users });
+    } else {
+      res.status(200).json({ message: "user does not exist", data: users });
+    }
+  } catch (error) {
+    console.log("Error", error);
+    res.status(500).json({ error: "sometthing went wrong!" });
+  }
+};
+
+module.exports.update_user = async (req, res) => {
+  try {
+    const payload = req.body;
+    const response = await user_services.update_user(payload);
+    if (response) {
+      res
+        .status(200)
+        .json({ message: "user updated successfully", data: response });
+    } else {
+      res
+        .status(200)
+        .json({ message: "user updated unsuccessfully", data: response });
+    }
+  } catch (error) {
+    console.log("error:", error.message);
+    res.status(500).json({ error: "sometthing went wrong!" });
+  }
+};
+
+module.exports.delete_user = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const response = await user_services.delete_user(id);
+    if (response) {
+      res
+        .status(200)
+        .json({ message: "user deleted successfully", data: response });
+    }
+  } catch (error) {
+    console.log("error:", error.message);
+    res.status(500).json({ message: "something went wrong", data: response });
+  }
+};
 module.exports.send_code = async (req, res) => {
   try {
     const { email } = req.body;

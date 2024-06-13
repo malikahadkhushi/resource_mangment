@@ -97,6 +97,9 @@ const token_verification = async (req, res, next) => {
   try {
     const accessToken = req.headers["authorization"];
     console.log("accessToken", accessToken);
+    if (!accessToken) {
+      res.status(403).json({ message: "You are not authorized please login!" });
+    }
     // const bearer = accessToken.split(" ");
     // const bearerToken = bearer[1];
     const isExpire = verify_token(accessToken);

@@ -1,6 +1,10 @@
 const {
   create_user,
   login,
+  get_user,
+  get_users,
+  update_user,
+  delete_user,
   send_code,
   compare_code,
   reset_password,
@@ -23,6 +27,10 @@ user_router.post(
   create_user
 );
 
+user_router.post("/get-user", get_user);
+user_router.get("/get-users", get_users);
+user_router.put("/update-user", update_user);
+user_router.delete("/delete-user/:id", delete_user);
 user_router.post("/login", verify_login_payload, login);
 user_router.post("/send-code", send_code);
 user_router.post("/compare-code", compare_code);

@@ -7,6 +7,7 @@ const project = new mongoose.Schema(
       required: true,
     },
     description: String,
+    work_space: String,
     start_date: Date,
     image: String,
     end_date: Date,

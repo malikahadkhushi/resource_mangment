@@ -13,6 +13,12 @@ const workspaceSchema = new mongoose.Schema({
   members: {
     type: Array,
   },
+  tags: {
+    type: Array,
+  },
+  states: {
+    type: Array,
+  },
   created_by: {
     type: String,
     required: true,
