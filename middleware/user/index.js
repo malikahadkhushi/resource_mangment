@@ -1,4 +1,4 @@
-const { verify_token } = require("../../utils/jwtToken");
+const { verify_token, decoded_token } = require("../../utils/jwtToken");
 const { user_services } = require("../../services/index");
 
 const verify_user_payload = (req, res, next) => {
@@ -42,7 +42,7 @@ const verify_user_payload = (req, res, next) => {
 const verify_login_payload = (req, res, next) => {
   try {
     const { email = "", password = "" } = req.body;
-    const emailRegex = /^[^s@]+@[^s@]+.[^s@]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.*[a-z]).{8,}$/;
 
     if (!email.trim() || !password.trim()) {
@@ -57,13 +57,13 @@ const verify_login_payload = (req, res, next) => {
     // Check if password matches the regex
     if (!passwordRegex.test(password)) {
       return res.status(400).json({
-        error:
-          "Password must contain at least one uppercase letter, one special character, and be at least 8 characters long",
+        error: "Invalid Password format",
       });
     }
     next();
   } catch (error) {
-    throw error;
+    console.log("Error", error);
+    return res.status(500).json({ error: "Something went wrong!" });
   }
 };
 
@@ -93,30 +93,49 @@ const check_user_existence = async (req, res, next) => {
   }
 };
 
-const token_verification = async (req, res, next) => {
-  try {
-    const accessToken = req.headers["authorization"];
-    console.log("accessToken", accessToken);
-    if (!accessToken) {
-      res.status(403).json({ message: "You are not authorized please login!" });
-    }
-    // const bearer = accessToken.split(" ");
-    // const bearerToken = bearer[1];
-    const isExpire = verify_token(accessToken);
-    console.log("verofy", isExpire);
-    if (isExpire) {
-      res
-        .status(401)
-        .json({ message: "you are not authorized to perform this action" });
-    } else {
-      next();
-    }
-  } catch (error) {
-    console.log("Error", error.message);
-    res.status(500).json({ message: "something went wrong !" });
-  }
-};
+const token_verification = (roles) => {
+  return async (req, res, next) => {
+    try {
+      const accessToken = req.headers["authorization"];
+      console.log("aceesstoken", accessToken);
+      if (!accessToken) {
+        return res
+          .status(403)
+          .json({ message: "You are not authorized, please login!" });
+      }
 
+      // const bearer = accessToken.split(" ");
+      // if (bearer.length !== 2 || bearer[0] !== "Bearer") {
+      //   return res.status(400).json({ message: "Invalid token format" });
+      // }
+
+      // const bearerToken = bearer[1];
+      // console.log("bearerToken", bearerToken);
+
+      const { isExpire, decoded } = verify_token(accessToken);
+
+      if (isExpire) {
+        return res
+          .status(401)
+          .json({ message: "You are not authorized to perform this action" });
+      }
+
+      const { data } = decoded;
+      const hasRequiredRole = roles.some((role) => data._doc.role === role);
+
+      if (!hasRequiredRole) {
+        return res
+          .status(403)
+          .json({ message: "Forbidden: You do not have the permissions" });
+      }
+
+      next();
+    } catch (error) {
+      console.log("Error:", error.message);
+      res.status(500).json({ message: "Something went wrong!" });
+    }
+  };
+};
 module.exports = {
   verify_user_payload,
   check_user_existence,

@@ -36,6 +36,25 @@ module.exports.get_workspaces = async (req, res) => {
   }
 };
 
+module.exports.get_user_workspaces = async (req, res) => {
+  const { id } = req.body;
+  try {
+    const workspaces = await workspace_services.get_all_workspaces(id);
+    if (workspaces.length) {
+      res.status(200).json({ message: "successfull", data: workspaces });
+    } else {
+      res
+        .status(404)
+        .json({ message: "no workspaces exist", data: workspaces });
+    }
+  } catch (error) {
+    console.log("Error", error.message);
+    res
+      .status(500)
+      .json({ message: "some thing went wrong", data: workspaces });
+  }
+};
+
 module.exports.get_workspace = async (req, res) => {
   try {
     const { id } = req.params;

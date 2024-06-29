@@ -1,4 +1,4 @@
-const userModal = require("../../schema/user/index");
+const userModal = require("../../schema/users/index");
 module.exports.user_services = {
   get_user: ({ field, value }) => {
     try {
@@ -25,7 +25,6 @@ module.exports.user_services = {
   },
 
   create_user: (payload) => {
-    console.log("Payload", payload);
     try {
       return userModal.insertMany(payload);
     } catch (error) {
@@ -35,15 +34,27 @@ module.exports.user_services = {
 
   update_user: (payload) => {
     try {
-      const { _id, ...data } = payload;
-      return userModal.findByIdAndUpdate(_id, data, { new: true });
+      const { field, value, ...data } = payload;
+      return userModal.findOneAndUpdate({ [field]: value }, data, {
+        new: true,
+      });
     } catch (error) {
       throw error;
     }
   },
 
-  compare_code: (password, code) => {
+  compare_code: async (password, code, email) => {
     if (code.length < 6) throw new Error("Code should be 6 digit");
-    return password === code;
+    const isCompare = password == code;
+    if (isCompare) {
+      await userModal.findOneAndUpdate(
+        { email: email },
+        { isConfirmed: true },
+        {
+          new: true,
+        }
+      );
+    }
+    return password == code;
   },
 };

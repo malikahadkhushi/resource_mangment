@@ -14,9 +14,9 @@ module.exports.create_user = async (req, res) => {
   try {
     const payload = req.body;
     const { password } = payload;
-    console.log("sdfsd", payload);
     const hash = await generate_hash_password(password);
     payload.password = hash;
+    payload.isConfirmed = false;
     const response = await user_services.create_user(payload);
     if (response) {
       notify_created_user(payload.email);
@@ -32,8 +32,13 @@ module.exports.create_user = async (req, res) => {
 module.exports.login = async (req, res) => {
   try {
     let { email, password } = req.body;
-
     const user = await user_services.get_user({ field: "email", value: email });
+    if (!user) return res.status(401).json({ message: "User does not exist" });
+
+    if (!user?.isConfirmed) {
+      return res.status(401).json({ message: "User is not confirmed" });
+    }
+
     if (user?.password) {
       const response = await compare_password({
         password,
@@ -41,19 +46,21 @@ module.exports.login = async (req, res) => {
       });
       const token = jwt_token_generator(user);
       if (response) {
-        res.status(200).json({
+        return res.status(200).json({
           message: "login sucsessfull!",
           data: token,
         });
       } else {
-        res.status(401).json({ message: "incorrect password", data: response });
+        return res
+          .status(401)
+          .json({ error: "Incorrect password", data: response });
       }
     } else {
-      res.status(401).json({ message: "incorrect email" });
+      return res.status(401).json({ error: "Incorrect email" });
     }
   } catch (error) {
     console.log("Error", error);
-    res.status(500).json({ error: "something went wrong!" });
+    return res.status(500).json({ error: "something went wrong!" });
   }
 };
 
@@ -63,13 +70,13 @@ module.exports.get_user = async (req, res) => {
     const user = await user_services.get_user({ field: field, value: value });
 
     if (user) {
-      res.status(200).json({ message: "successfull", data: user });
+      res.status(200).send({ message: "successfull", data: user });
     } else {
-      res.status(200).json({ message: "user does not exist", data: user });
+      res.status(200).send({ message: "user does not exist", data: user });
     }
   } catch (error) {
     console.log("Error", error);
-    res.status(500).json({ error: "sometthing went wrong!" });
+    res.status(500).send({ error: "sometthing went wrong!" });
   }
 };
 
@@ -121,35 +128,44 @@ module.exports.delete_user = async (req, res) => {
     res.status(500).json({ message: "something went wrong", data: response });
   }
 };
+
 module.exports.send_code = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { field, value } = req.body;
     const code = generateSixDigitCode();
     const payload = {
-      email: email,
+      field: field,
+      value: value,
       password: code,
     };
+    console.log(payload);
     const response = await user_services.update_user(payload);
     if (response) {
-      send_password_reset_email(email, code);
-      res.status(200).json({ message: "code set to password" });
+      send_password_reset_email(value, code);
+      return res.status(200).json({ message: "code set to password" });
     } else {
-      res.status(204).json({ message: "code is not set to password" });
+      return res.status(204).json({ message: "code is not set to password" });
     }
   } catch (error) {
     console.log("error", error);
-    res.status(500).json({ message: "something went wrong!" });
+    return res.status(500).json({ message: "something went wrong!" });
   }
 };
 
 module.exports.compare_code = async (req, res) => {
   try {
     const { email, code } = req.body;
-    const response = await user_services.get_user_by_email(email);
-    const isCompare = user_services.compare_code(response.password, code);
-    console.log("isCompare", isCompare);
+    const response = await user_services.get_user({
+      field: "email",
+      value: email,
+    });
+    const isCompare = await user_services.compare_code(
+      response.password,
+      code,
+      email
+    );
 
-    if (isCompare) {
+    if (isCompare == true) {
       res.status(200).json({ message: "code matched" });
     } else {
       res.status(401).json({ message: "code not matched" });
@@ -165,7 +181,8 @@ module.exports.reset_password = async (req, res) => {
     const { email, password } = req.body;
     const hashPassword = await generate_hash_password(password);
     const payload = {
-      email: email,
+      field: "email",
+      value: email,
       password: hashPassword,
     };
     const response = await user_services.update_user(payload);

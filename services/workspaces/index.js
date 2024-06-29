@@ -9,9 +9,16 @@ module.exports.workspace_services = {
     }
   },
 
-  get_all_workspaces: () => {
+  get_all_workspaces: (id = undefined) => {
     try {
-      return workspaceModel.find();
+      if (id) {
+        console.log("ID", id);
+        return workspaceModel.find({
+          members: id,
+        });
+      } else {
+        return workspaceModel.find();
+      }
     } catch (error) {
       throw error;
     }
